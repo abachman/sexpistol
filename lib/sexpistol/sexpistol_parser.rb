@@ -1,11 +1,41 @@
-require 'strscan'	
+require 'strscan'
 
 class SexpistolParser < StringScanner
 
   def initialize(string)
-    unless(string.count('(') == string.count(')'))
-      raise Exception, "Missing closing parentheses"
+    # step through string counting closing parens, exclude parens in string literals
+    in_string_literal = false
+    escape_char = false
+    paren_count = 0
+    string.bytes.each do |byte|
+      if escape_char
+        escape_char = false
+        next
+      end
+
+      case byte.chr
+      when '\\'
+        escape_char = true
+        next
+      when '('
+        if !in_string_literal
+          paren_count += 1
+        end
+      when ')'
+        if !in_string_literal
+          paren_count -= 1
+        end
+      when '"'
+        in_string_literal = !in_string_literal
+      end
     end
+
+    if paren_count > 0
+      raise Exception, "Missing closing parentheses"
+    elsif paren_count < 0
+      raise Exception, "Missing opening parentheses"
+    end
+
     super(string)
   end
 
