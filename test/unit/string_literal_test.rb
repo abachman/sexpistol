@@ -39,9 +39,11 @@ class StringLiteralTest < Test::Unit::TestCase
   test "should parse string literal containing unmatched parens" do
     ast = nil
     assert_nothing_raised do
-      ast = @parser.parse_string('("this makes me sad :(")')
+      ast = @parser.parse_string('("this makes me sad :( and happy :) :)")')
     end
-    assert_equal [["this makes me sad :("]], ast
+    assert_equal [["this makes me sad :( and happy :) :)"]], ast
   end
+
+
 
 end

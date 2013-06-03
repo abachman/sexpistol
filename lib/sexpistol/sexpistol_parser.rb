@@ -52,31 +52,31 @@ class SexpistolParser < StringScanner
           when '(' then exp << [:quote].concat([parse])
           else exp << [:quote, @token]
           end
-        when String, Fixnum, Float, Symbol 
+        when String, Fixnum, Float, Symbol
           exp << @token
-        when nil 
+        when nil
           break
       end
     end
     exp
   end
-  
+
   def fetch_token
     skip(/\s+/)
     return nil if(eos?)
-    
-    @token = 
+
+    @token =
     # Match parentheses
-    if scan(/[\(\)]/)      
+    if scan(/[\(\)]/)
       matched
     # Match a string literal
     elsif scan(/"([^"\\]|\\.)*"/)
       eval(matched)
     # Match a float literal
-    elsif scan(/[\-\+]? [0-9]+ ((e[0-9]+) | (\.[0-9]+(e[0-9]+)?))/x)
+    elsif scan(/[\-\+]? [0-9]+ ((e[0-9]+) | (\.[0-9]+(e[0-9]+)?))#{ expression_ender }/x)
       matched.to_f
     # Match an integer literal
-    elsif scan(/[\-\+]?[0-9]+/)
+    elsif scan(/[\-\+]?[0-9]+#{ expression_ender }/)
       matched.to_i
     # Match a comma (for comma quoting)
     elsif scan(/'/)
@@ -89,6 +89,14 @@ class SexpistolParser < StringScanner
       near = scan %r{.{0,20}}
       raise "Invalid character at position #{pos} near '#{near}'."
     end
+  end
+
+  def expression_ender
+    # end Fixnum and Float matchers with a non-grouping positive lookahead
+    # assertion that matches a closing paren, whitespace, or string end.  The
+    # positive lookahead (?=...) ensures the string scanner includes the ending
+    # character in next fetch_token call.
+    '(?=(?:\)|\s|$))'
   end
 
 end
